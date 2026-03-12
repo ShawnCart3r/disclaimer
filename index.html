@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Website Disclaimer Popup</title>
+
+<style>
+/* =====================================================
+   DISCLAIMER POPUP WIDGET — v2.0
+   ✏️  CUSTOMIZE: Edit the CONFIG section in <script>
+   ✏️  COLORS: Change --primary below to your brand color
+   ✏️  TEXT: Edit the HTML in the .disclaimer-content div
+   ===================================================== */
+
+:root {
+  --primary:        #0073e6;   /* ← your brand color */
+  --primary-hover:  #005fcc;
+  --primary-ring:   rgba(0,115,230,0.22);
+  --overlay:        rgba(8,10,20,0.72);
+  --dialog-bg:      rgba(255,255,255,0.97);
+  --ink:            #0b0c10;
+  --text-light:     #555;
+  --border:         rgba(0,0,0,0.09);
+  --shadow:         0 24px 64px rgba(0,0,0,0.32);
+  --radius:         20px;
+  --radius-btn:     999px;
+  --transition:     0.22s cubic-bezier(0.2,0.8,0.2,1);
+}
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font: 16px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: #222;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: contain;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ── Overlay ── */
+#disclaimer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+
+  /* entrance animation */
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+#disclaimer-modal.visible { opacity: 1; }
+
+#disclaimer-modal[hidden] { display: none !important; }
+
+/* ── Dialog ── */
+.disclaimer-dialog {
+  position: relative;
+  width: min(92vw, 560px);
+  max-height: calc(100svh - 32px
+    - env(safe-area-inset-top, 0px)
+    - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  background: var(--dialog-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  /* entrance */
+  transform: translateY(12px) scale(0.97);
+  transition: transform var(--transition), opacity var(--transition);
+  opacity: 0;
+}
+
+#disclaimer-modal.visible .disclaimer-dialog {
+  transform: none;
+  opacity: 1;
+}
+
+/* ── Icon ── */
+.disclaimer-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(0,115,230,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  margin-bottom: -4px;
+}
+
+/* ── Content ── */
+.disclaimer-content { line-height: 1.65; }
+
+.disclaimer-content h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 10px;
+  line-height: 1.3;
+}
+
+.disclaimer-content p {
+  font-size: 0.9375rem;
+  color: var(--text-light);
+  margin: 0 0 10px;
+}
+
+.disclaimer-content p:last-child { margin-bottom: 0; }
+
+.disclaimer-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Divider ── */
+.disclaimer-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 -4px;
+}
+
+/* ── Actions ── */
+.disclaimer-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Buttons ── */
+.btn {
+  appearance: none;
+  border: none;
+  border-radius: var(--radius-btn);
+  padding: 12px 22px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  min-height: 46px;
+  line-height: 1.1;
+  transition: background var(--transition), box-shadow var(--transition), transform 0.08s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:active { transform: translateY(1px) scale(0.99); }
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-ring);
+}
+
+/* ripple */
+.btn .ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  transform: scale(0);
+  animation: ripple 0.5s linear;
+  pointer-events: none;
+}
+
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  flex: 1;
+  box-shadow: 0 4px 16px rgba(0,115,230,0.3);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 6px 20px rgba(0,115,230,0.4);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-light);
+  border: 1.5px solid var(--border);
+  flex: 1;
+}
+
+.btn-ghost:hover {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.16);
+}
+
+/* ── Progress bar (optional — shows time before auto-close) ── */
+.disclaimer-progress {
+  height: 3px;
+  background: rgba(0,115,230,0.12);
+  border-radius: 999px;
+  overflow: hidden;
+  display: none;
+}
+
+.disclaimer-progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  width: 100%;
+  transform-origin: left;
+  transform: scaleX(1);
+  transition: transform linear;
+}
+
+/* ── Dark mode ── */
+@media (prefers-color-scheme: dark) {
+  .disclaimer-dialog {
+    background: rgba(18,20,28,0.95);
+    color: #f0f0f0;
+  }
+
+  .disclaimer-content h2 { color: #f0f0f0; }
+  .disclaimer-content p  { color: #999; }
+
+  .btn-ghost {
+    color: #aaa;
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .disclaimer-divider { background: rgba(255,255,255,0.08); }
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .disclaimer-dialog { padding: 24px 20px 20px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+
+  .disclaimer-actions { flex-direction: column; }
+}
+
+@media (max-height: 500px) {
+  .disclaimer-dialog { padding: 16px; gap: 12px; }
+  .btn { padding: 10px 16px; min-height: 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+     DISCLAIMER MODAL
+     ✏️  Edit the text inside .disclaimer-content
+     ===================================================== -->
+<div
+  id="disclaimer-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="disclaimer-title"
+  aria-describedby="disclaimer-desc"
+  hidden
+>
+  <div class="disclaimer-dialog" tabindex="-1">
+
+    <!-- ✏️ Optional icon — change emoji or remove this block -->
+    <div class="disclaimer-icon" aria-hidden="true">⚠️</div>
+
+    <!-- ✏️ YOUR DISCLAIMER TEXT — edit freely -->
+    <div class="disclaimer-content">
+      <h2 id="disclaimer-title">Before You Continue</h2>
+      <p id="disclaimer-desc">
+        This website is for informational purposes only and does not constitute
+        professional, legal, or medical advice. By continuing, you acknowledge
+        that you have read and agree to our
+        <a href="/terms" target="_blank" rel="noopener">Terms of Use</a>
+        and
+        <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+      </p>
+    </div>
+
+    <div class="disclaimer-divider" aria-hidden="true"></div>
+
+    <!-- Optional progress bar — shown when autoCloseMs is set -->
+    <div class="disclaimer-progress" id="disclaimer-progress" aria-hidden="true">
+      <div class="disclaimer-progress-bar" id="disclaimer-progress-bar"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="disclaimer-actions">
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="disclaimer-agree"
+        autofocus
+      >
+        I Understand
+      </button>
+      <button
+        type="button"
+        class="btn btn-ghost"
+        id="disclaimer-decline"
+      >
+        Leave Site
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================
+     ✏️  CONFIG — edit these values
+     ===================================================== */
+  const CONFIG = {
+    // "local"   = remembers across browser sessions (uses localStorage)
+    // "session" = forgets when tab is closed (uses sessionStorage)
+    storage: 'local',
+
+    // How many days to remember acceptance (localStorage only)
+    rememberDays: 365,
+
+    // Where to send users who click "Leave Site"
+    declineUrl: 'https://www.google.com',
+
+    // Auto-close after X milliseconds (0 = disabled)
+    // Example: autoCloseMs: 10000  →  closes after 10 seconds
+    autoCloseMs: 0,
+
+    // Internal storage key — change if you have multiple popups
+    storageKey: 'disclaimerAcceptedAt',
+  };
+
+  /* =====================================================
+     ENGINE — no need to edit below this line
+     ===================================================== */
+
+  const modal    = document.getElementById('disclaimer-modal');
+  const dialog   = modal.querySelector('.disclaimer-dialog');
+  const agreeBtn = document.getElementById('disclaimer-agree');
+  const declineBtn = document.getElementById('disclaimer-decline');
+  const progressWrap = document.getElementById('disclaimer-progress');
+  const progressBar  = document.getElementById('disclaimer-progress-bar');
+
+  const store = CONFIG.storage === 'local' ? localStorage : sessionStorage;
+
+  // ── Acceptance helpers ──
+  function isAccepted() {
+    const ts = store.getItem(CONFIG.storageKey);
+    if (!ts) return false;
+    if (CONFIG.storage !== 'local' || !CONFIG.rememberDays) return true;
+    return (Date.now() - Number(ts)) < CONFIG.rememberDays * 864e5;
+  }
+
+  function markAccepted() {
+    store.setItem(CONFIG.storageKey, String(Date.now()));
+  }
+
+  // ── Scroll lock ──
+  function lockScroll(lock) {
+    document.documentElement.style.overflow = lock ? 'hidden' : '';
+  }
+
+  // ── Ripple effect ──
+  function addRipple(btn, e) {
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 2;
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top  - size / 2;
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  }
+
+  // ── Open ──
+  function open() {
+    if (isAccepted()) return;
+
+    modal.hidden = false;
+    lockScroll(true);
+
+    // Trigger CSS transition on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => modal.classList.add('visible'));
+    });
+
+    setupFocusTrap();
+    startAutoClose();
+  }
+
+  // ── Close (accepted) ──
+  function close() {
+    modal.classList.remove('visible');
+    lockScroll(false);
+    clearTimeout(autoCloseTimer);
+
+    modal.addEventListener('transitionend', () => {
+      modal.hidden = true;
+    }, { once: true });
+  }
+
+  // ── Focus trap ──
+  function setupFocusTrap() {
+    const getFocusable = () =>
+      [...modal.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])')];
+
+    const first = () => getFocusable()[0];
+    const last  = () => { const f = getFocusable(); return f[f.length - 1]; };
+
+    (first() || dialog).focus();
+
+    function trap(e) {
+      if (e.key !== 'Tab') return;
+      const f = getFocusable();
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) {
+        e.preventDefault(); f[f.length - 1].focus();
+      } else if (!e.shiftKey && document.activeElement === f[f.length - 1]) {
+        e.preventDefault(); f[0].focus();
+      }
+    }
+
+    // Escape does nothing (modal must be acknowledged)
+    function blockEscape(e) {
+      if (e.key === 'Escape') e.preventDefault();
+    }
+
+    modal.addEventListener('keydown', trap);
+    modal.addEventListener('keydown', blockEscape);
+
+    // Clean up on close
+    modal.addEventListener('transitionend', () => {
+      modal.removeEventListener('keydown', trap);
+      modal.removeEventListener('keydown', blockEscape);
+    }, { once: true });
+  }
+
+  // ── Auto-close ──
+  let autoCloseTimer = null;
+
+  function startAutoClose() {
+    if (!CONFIG.autoCloseMs || CONFIG.autoCloseMs <= 0) return;
+
+    progressWrap.style.display = 'block';
+    progressBar.style.transition = `transform ${CONFIG.autoCloseMs}ms linear`;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        progressBar.style.transform = 'scaleX(0)';
+      });
+    });
+
+    autoCloseTimer = setTimeout(() => {
+      markAccepted();
+      close();
+    }, CONFIG.autoCloseMs);
+  }
+
+  // ── Click outside does nothing (must acknowledge) ──
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) e.stopPropagation();
+  });
+
+  // ── Button handlers ──
+  agreeBtn.addEventListener('click', (e) => {
+    addRipple(agreeBtn, e);
+    markAccepted();
+    setTimeout(close, 120);
+  });
+
+  declineBtn.addEventListener('click', (e) => {
+    addRipple(declineBtn, e);
+    setTimeout(() => {
+      window.location.href = CONFIG.declineUrl;
+    }, 120);
+  });
+
+  // ── Init ──
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', open);
+  } else {
+    open();
+  }
+
+})();
+</script>
+</body>
+</html>
